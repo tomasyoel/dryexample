@@ -1,0 +1,49 @@
+name: DRY Principle Benchmark
+
+on: [push]
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      
+      - name: Run DRY Benchmark
+        run: |
+          echo "=== DRY PRINCIPLE BENCHMARK ==="
+          python -c "
+          from timeit import timeit
+          from temperature_converter import convert_temps_non_dry, convert_temps_dry
+          
+          test_data = [32, 68, 100, 212] * 1000  # Large dataset
+          
+          # Benchmark Non-DRY
+          non_dry_time = timeit(
+              lambda: convert_temps_non_dry(test_data),
+              number=100
+          )
+          
+          # Benchmark DRY
+          dry_time = timeit(
+              lambda: convert_temps_dry(test_data),
+              number=100
+          )
+          
+          print(f'Non-DRY Average: {non_dry_time/100:.6f}s per run')
+          print(f'DRY Average: {dry_time/100:.6f}s per run')
+          print(f'DRY is {non_dry_time/dry_time:.1f}x faster!')
+          "
+      
+      - name: Validate Correctness
+        run: |
+          python -c "
+          from temperature_converter import convert_temps_non_dry, convert_temps_dry
+          test_data = [32, 212]
+          assert convert_temps_non_dry(test_data) == convert_temps_dry(test_data)
+          print('✅ Both versions produce identical results!')
+          "
